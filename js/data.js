@@ -109,7 +109,8 @@ export const QUESTIONS = [
 
   { id:"person", section:"little", short:"From my person",
     q:"What makes you feel most loved by your person?",
-    showIf:s => s.ctx===1 || s.ctx===2,
+    /* asked of people in a relationship: "Single and dating", "Married" */
+    showIf:s => s.ctx===2 || s.ctx===3,
     type:"single", other:true, options:[
       "Being told, out loud",
       "Time together with no phones",
@@ -119,7 +120,8 @@ export const QUESTIONS = [
 
   { id:"friend", section:"little", short:"A good friend",
     q:"What does a good friend do that means the most?",
-    showIf:s => s.ctx===0 || s.ctx===3 || s.ctx==null,
+    /* the other half: "Campus", "Single and not dating", or unanswered */
+    showIf:s => s.ctx===0 || s.ctx===1 || s.ctx==null,
     type:"single", other:true, options:[
       "Checks in without being prompted",
       "Shows up when it matters",
@@ -145,5 +147,8 @@ export const QUESTIONS = [
     ]}
 ];
 
-export const CONTEXTS = ["Single","Talking to someone or dating","Engaged or married","Rather not say"];
+/* CONTEXTS is positional: state.ctx stores the INDEX, not the label, and the
+   showIf functions above test that index. Reorder these and you change which
+   question people get — and what old share links decode to. */
+export const CONTEXTS = ["Campus","Single and not dating","Single and dating","Married"];
 export const AGES = ["Under 18","18–24","25–34","35–44","45–54","55+","Rather not say"];

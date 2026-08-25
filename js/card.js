@@ -60,7 +60,7 @@ export function renderCard(s, isViewer){
 
   const tags = [ s.age && s.age!=="Rather not say" ? s.age : "",
                  s.country || "",
-                 s.ctx!=null && s.ctx!==3 ? CONTEXTS[s.ctx] : "" ]
+                 s.ctx!=null ? CONTEXTS[s.ctx] : "" ]
                .filter(Boolean).map(t => `<span class="tag">${esc(t)}</span>`).join("");
 
   const url = shareURL(s);
