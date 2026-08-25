@@ -15,15 +15,20 @@
 }
 .slip:hover{transform:rotate(-.5deg) translateY(-2px);box-shadow:0 6px 18px rgba(36,27,54,.13)}
 .slip:nth-child(even):hover{transform:rotate(.5deg) translateY(-2px)}
+/* a chosen option stays put and stays obvious: tinted fill, ink ring,
+   a marigold dot, and a slight tilt so it lifts out of the stack */
 .slip[aria-pressed="true"]{
+  background:var(--pick);
   border-color:var(--ink);
   box-shadow:0 0 0 2px var(--ink), 0 8px 20px rgba(36,27,54,.16);
   transform:rotate(-.7deg);
 }
+.slip[aria-pressed="true"]:hover,
+.slip:nth-child(even)[aria-pressed="true"]:hover{transform:rotate(-.7deg) translateY(-2px)}
 .slip[aria-pressed="true"]::after{
   content:"";position:absolute;right:15px;top:50%;transform:translateY(-50%);
   width:16px;height:16px;border-radius:50%;background:var(--marigold);
-  box-shadow:inset 0 0 0 3px var(--paper);
+  box-shadow:inset 0 0 0 3px var(--pick);
 }
 .slip .why{
   position:absolute;right:12px;top:50%;transform:translateY(-50%);
@@ -72,6 +77,16 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--ink);outline-off
 .btn.gold{background:var(--marigold);border-color:var(--marigold);color:var(--ink)}
 .btn.wide{width:100%}
 .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+
+/* Previous pinned left, Next pushed right; they stack side by side on
+   narrow screens rather than wrapping onto two lines */
+.actions.nav{align-items:center}
+.actions.nav .nav-next{margin-left:auto}
+@media (max-width:430px){
+  .actions.nav .btn{flex:1 1 0;min-width:0;padding-left:16px;padding-right:16px}
+  .actions.nav .nav-next{margin-left:0}
+  .actions.nav .linkbtn{flex:1 0 100%;text-align:center}
+}
 .linkbtn{
   background:none;border:0;color:var(--ink-soft);text-decoration:underline;
   cursor:pointer;font:500 15px "Karla",sans-serif;padding:8px 0;

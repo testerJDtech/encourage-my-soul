@@ -13,6 +13,7 @@
   --marigold:#F2A33C;
   --rose:#C4577C;
   --line:rgba(36,27,54,.14);
+  --pick:#FDF1E0;          /* fill behind a chosen option */
 
   --slip-r:10px;
   --pad:clamp(20px,5vw,40px);

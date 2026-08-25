@@ -14,9 +14,9 @@
    ================================================================== */
 
 export const SECTIONS = {
-  comms:  { name:"Talking",           blurb:"How you like to be reached, and what lands when things are hard." },
+  comms:  { name:"Communication",           blurb:"What is the best way you would like to be communicated, and what lands when things are hard?" },
   food:   { name:"Food & drink",      blurb:"The easiest kind of love language to act on." },
-  little: { name:"The little things", blurb:"What makes you feel noticed." },
+  little: { name:"The little things", blurb:"What makes you feel noticed?" },
   love:   { name:"Love languages",    blurb:"Two that fit you best. There's a ? on each if you want it explained." }
 };
 
@@ -42,7 +42,7 @@ export const QUESTIONS = [
   { id:"reach", section:"comms", short:"Best way to reach me",
     q:"What's the best way to reach you?",
     type:"single", other:true, options:[
-      "WhatsApp message",
+      "Messages",
       "Voice note",
       "Phone call",
       "Face to face"

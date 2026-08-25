@@ -5,8 +5,36 @@
 
 import { SECTIONS, CONTEXTS, AGES } from "./data.js";
 import { state, bro, loadDraft } from "./state.js";
-import { view, topbar, esc, toast } from "./dom.js";
+import { view, topbar, esc } from "./dom.js";
 import { STEPS, next, back } from "./router.js";
+
+/* ---------- shared Previous / Next nav ----------
+   Every question screen ends with this, so nothing auto-advances and a
+   chosen option stays highlighted until the person moves on themselves. */
+function navRow({ nextLabel="Next", nextDisabled=false, gold=false, extra="" } = {}){
+  return `<div class="actions nav">
+      <button class="btn ghost nav-prev" id="prevbtn">&larr; Previous</button>
+      <button class="btn ${gold?"gold ":""}nav-next" id="nextbtn" ${nextDisabled?"disabled":""}>${nextLabel}</button>
+      ${extra}
+    </div>`;
+}
+
+function wireNav(){
+  document.getElementById("prevbtn").onclick = back;
+  document.getElementById("nextbtn").onclick = next;
+}
+
+/* enable/disable Next as the person answers, without a re-render */
+const setNextEnabled = ok => { document.getElementById("nextbtn").disabled = !ok; };
+
+/* has this question got a usable answer yet? */
+function isAnswered(q){
+  const a = state.answers[q.id];
+  if(!a) return false;
+  if(q.type==="text") return !!a.text?.trim();
+  if(a.other!=null)   return !!a.other.trim();
+  return !!a.sel?.length;
+}
 
 /* ---------- topbar: back button + progress dots ---------- */
 export function renderTopbar(s){
@@ -125,14 +153,16 @@ export function vContext(){
     <p class="lead" style="margin-top:8px">This just changes one question later on.</p>
     <div class="slips" id="opts">
       ${CONTEXTS.map((o,i) => `<button class="slip" data-i="${i}" aria-pressed="${state.ctx===i}">${o}</button>`).join("")}
-    </div>`;
+    </div>
+    ${navRow({ nextDisabled: state.ctx==null })}`;
 
   document.getElementById("opts").onclick = e => {
     const b = e.target.closest("[data-i]"); if(!b) return;
     state.ctx = +b.dataset.i;
     [...e.currentTarget.children].forEach(c => c.setAttribute("aria-pressed", c===b));
-    setTimeout(next, 180);
+    setNextEnabled(true);
   };
+  wireNav();
 }
 
 /* ---------- section divider ---------- */
@@ -143,8 +173,8 @@ export function vSection({s}){
     <div class="sectionnum">${n}</div>
     <h1 class="qtitle" style="margin-top:10px">${sec.name}</h1>
     <p class="lead">${sec.blurb}</p>
-    <div class="actions"><button class="btn" id="go">Go on then</button></div>`;
-  document.getElementById("go").onclick = next;
+    ${navRow({ nextLabel:"Go on then" })}`;
+  wireNav();
 }
 
 /* ---------- a question ---------- */
@@ -158,13 +188,16 @@ export function vQuestion({q}){
       <h1 class="qtitle" style="margin-top:10px">${q.q}</h1>
       ${q.hint ? `<p class="lead" style="margin-top:8px">${q.hint}</p>` : ""}
       <div class="field"><textarea id="tx" maxlength="400" placeholder="Type here…">${esc(a.text||"")}</textarea></div>
-      <div class="actions">
-        <button class="btn" id="go">Next</button>
-        ${q.optional ? `<button class="linkbtn" id="skip">Skip this one</button>` : ""}
-      </div>`;
+      ${navRow({
+        nextDisabled: !q.optional && !isAnswered(q),
+        extra: q.optional ? `<button class="linkbtn" id="skip">Skip this one</button>` : ""
+      })}`;
     const tx = document.getElementById("tx");
-    tx.oninput = () => state.answers[q.id] = { text: tx.value };
-    document.getElementById("go").onclick = next;
+    tx.oninput = () => {
+      state.answers[q.id] = { text: tx.value };
+      if(!q.optional) setNextEnabled(!!tx.value.trim());
+    };
+    wireNav();
     if(q.optional) document.getElementById("skip").onclick = () => { delete state.answers[q.id]; next(); };
     return;
   }
@@ -184,7 +217,7 @@ export function vQuestion({q}){
       ${q.other ? `<button class="slip" data-other="1" aria-pressed="${a.other!=null}">Something else&hellip;</button>` : ""}
     </div>
     <div id="otherbox"></div>
-    ${multi ? `<div class="actions"><button class="btn" id="go" ${sel.length?"":"disabled"}>Next</button></div>` : ""}
+    ${navRow({ nextDisabled: !isAnswered(q) })}
     ${q.section==="love" ? `<p class="tiny">The five love languages are Gary Chapman's framework; the descriptions here are our own.</p>` : ""}`;
 
   const box = document.getElementById("otherbox");
@@ -192,15 +225,15 @@ export function vQuestion({q}){
   const showOther = () => {
     box.innerHTML = `<div class="field">
         <input type="text" id="ot" maxlength="120" placeholder="In your own words…" value="${esc(a.other||"")}">
-      </div>
-      <div class="actions"><button class="btn" id="og">Next</button></div>`;
+      </div>`;
     const ot = document.getElementById("ot");
     ot.focus();
-    ot.oninput = () => state.answers[q.id] = { other: ot.value };
-    ot.onkeydown = e => { if(e.key==="Enter" && ot.value.trim()) next(); };
-    document.getElementById("og").onclick = () => {
-      if(ot.value.trim()) next(); else toast("Add a few words first");
+    ot.oninput = () => {
+      state.answers[q.id] = { other: ot.value };
+      setNextEnabled(!!ot.value.trim());
     };
+    ot.onkeydown = e => { if(e.key==="Enter" && ot.value.trim()) next(); };
+    setNextEnabled(!!ot.value.trim());
   };
   if(a.other!=null) showOther();
 
@@ -224,15 +257,15 @@ export function vQuestion({q}){
       else { cur.push(i); if(cur.length>q.max) cur.shift(); }
       state.answers[q.id] = { sel:cur };
       kids.forEach(c => c.dataset.i && c.setAttribute("aria-pressed", cur.includes(+c.dataset.i)));
-      document.getElementById("go").disabled = !cur.length;
+      setNextEnabled(!!cur.length);
     }else{
       state.answers[q.id] = { sel:[i] };
       kids.forEach(c => c.setAttribute("aria-pressed", c===b));
-      setTimeout(next, 180);
+      setNextEnabled(true);
     }
   };
 
-  if(multi) document.getElementById("go").onclick = next;
+  wireNav();
 }
 
 /* ---------- extras ---------- */
@@ -242,11 +275,11 @@ export function vExtra(){
     <h1 class="qtitle" style="margin-top:10px">Anything the form<br>missed?</h1>
     <p class="lead">Something someone should know about how to encourage you. Skip it if you're done.</p>
     <div class="field"><textarea id="tx" maxlength="400" placeholder="Optional…">${esc(state.extra)}</textarea></div>
-    <div class="actions">
-      <button class="btn gold" id="go">Make my card</button>
-      <button class="linkbtn" id="skip">Nothing to add</button>
-    </div>`;
+    ${navRow({
+      nextLabel:"Make my card", gold:true,
+      extra:`<button class="linkbtn" id="skip">Nothing to add</button>`
+    })}`;
   document.getElementById("tx").oninput = e => state.extra = e.target.value;
-  document.getElementById("go").onclick = next;
+  wireNav();
   document.getElementById("skip").onclick = () => { state.extra = ""; next(); };
 }
