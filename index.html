@@ -1,23 +1,35 @@
-<!DOCtype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
-    <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>What Encourages You</title>
+<meta name="description" content="Ten minutes to work out what actually encourages you — then send it to someone who wants to know.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..900,0..100,0..1&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/card.css">
 </head>
-</html>
-
 <body>
-    <h1>What Encourages You?</h1>
-    <h2>Hebrews 3:13</h2>
-    <p>The Bible calls for us to encourage one another daily but sometimes we don't know what enocurages ourselves 
-        or what encourages the other person. This site is designed to make your life easier and help you
-        find what those things might be. <br></br>
-        Let's get started!
-    </p>
 
+<!-- Every screen is rendered into #view by js/views.js; #topbar holds
+     the back button and progress dots. -->
+<div id="app">
+  <div class="topbar" id="topbar"></div>
+  <div class="stage"><div class="view" id="view"></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<noscript>
+  <p style="padding:var(--pad)">This page needs JavaScript — it builds the questions and your card in the browser.</p>
+</noscript>
+
+<script type="module" src="js/app.js"></script>
 </body>
-
-
-
+</html>

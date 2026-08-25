@@ -1,0 +1,39 @@
+/* ============================================================
+   APP SHELL — topbar, progress dots, the centred stage
+   ============================================================ */
+#app{
+  position:relative;z-index:1;
+  min-height:100dvh;
+  display:flex;flex-direction:column;
+}
+
+.topbar{
+  display:flex;align-items:center;gap:14px;
+  padding:14px var(--pad) 0;
+  min-height:52px;
+}
+.backbtn{
+  border:0;background:none;cursor:pointer;padding:6px;margin-left:-6px;
+  color:var(--ink-soft);font:700 14px "Karla",sans-serif;
+  border-radius:8px;
+}
+.backbtn:hover{color:var(--ink)}
+
+.dots{display:flex;gap:5px;flex-wrap:wrap;flex:1}
+.dot{width:16px;height:4px;border-radius:99px;background:rgba(36,27,54,.16)}
+.dot.done{background:var(--ink)}
+.dot.now{background:var(--marigold);width:26px}
+.count{font:700 12px "Karla",sans-serif;color:var(--ink-soft);letter-spacing:.06em;white-space:nowrap}
+
+.stage{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:clamp(16px,4vh,40px) var(--pad) calc(var(--pad) + env(safe-area-inset-bottom));
+}
+.view{width:100%;max-width:var(--measure);animation:rise .45s cubic-bezier(.2,.8,.25,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ---------- section divider screen ---------- */
+.sectionnum{
+  font-family:"Fraunces",serif;font-variation-settings:"SOFT" 100,"WONK" 1;
+  font-size:clamp(5rem,22vw,9rem);line-height:.8;color:var(--dusk-deep);
+}
