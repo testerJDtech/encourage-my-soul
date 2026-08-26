@@ -1,0 +1,46 @@
+/* ============================================================
+   REVIEW LIST — every answer, each row a way back into that
+   one question. Reached from "Change an answer" on the card.
+   ============================================================ */
+.reviewlist{margin-top:8px}
+
+.reviewrow{
+  position:relative;display:block;width:100%;text-align:left;cursor:pointer;
+  background:var(--paper);color:var(--ink);
+  border:1px solid var(--line);border-radius:var(--slip-r);
+  padding:13px 88px 13px 16px;margin-top:8px;
+  transition:transform .16s cubic-bezier(.2,.8,.25,1),box-shadow .16s,border-color .16s;
+}
+.reviewrow:hover{
+  border-color:var(--ink);
+  transform:translateY(-2px);
+  box-shadow:0 6px 18px rgba(36,27,54,.13);
+}
+
+.reviewrow .rq{
+  display:block;font:700 12px "Karla",sans-serif;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);
+  margin-bottom:4px;
+}
+.reviewrow .ra{
+  display:block;
+  font-family:"Fraunces",Georgia,serif;font-variation-settings:"SOFT" 60,"WONK" 1;
+  font-size:1.12rem;line-height:1.3;
+}
+.reviewrow .ra.none{
+  font-family:"Karla",sans-serif;font-size:15px;font-style:italic;color:var(--ink-soft);
+}
+
+/* the affordance — always there, but only inks in on hover */
+.reviewrow .redit{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  font:700 12px "Karla",sans-serif;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-soft);
+  border:1px solid var(--line);border-radius:99px;padding:6px 12px;
+}
+.reviewrow:hover .redit{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+@media (max-width:430px){
+  .reviewrow{padding-right:16px;padding-bottom:40px}
+  .reviewrow .redit{top:auto;bottom:12px;right:auto;left:16px;transform:none}
+}

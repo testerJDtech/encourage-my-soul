@@ -6,21 +6,28 @@
 import { SECTIONS, CONTEXTS, AGES } from "./data.js";
 import { state, bro, loadDraft } from "./state.js";
 import { view, topbar, esc } from "./dom.js";
-import { STEPS, next, back } from "./router.js";
+import { STEPS, next, back, go, startEdit, isEditing,
+         indexOf, indexOfQ, activeQuestions, STEP_ABOUT, STEP_CONTEXT } from "./router.js";
+import { answerText, flat, displayAge } from "./answers.js";
 
 /* ---------- shared Previous / Next nav ----------
    Every question screen ends with this, so nothing auto-advances and a
    chosen option stays highlighted until the person moves on themselves. */
 function navRow({ nextLabel="Next", nextDisabled=false, gold=false, extra="" } = {}){
+  /* editing a single answer from the review list: no Previous to walk
+     back through, and the button says where it's taking you */
+  const edit = isEditing();
   return `<div class="actions nav">
-      <button class="btn ghost nav-prev" id="prevbtn">&larr; Previous</button>
-      <button class="btn ${gold?"gold ":""}nav-next" id="nextbtn" ${nextDisabled?"disabled":""}>${nextLabel}</button>
+      ${edit ? "" : `<button class="btn ghost nav-prev" id="prevbtn">&larr; Previous</button>`}
+      <button class="btn ${(gold||edit)?"gold ":""}nav-next" id="nextbtn" ${nextDisabled?"disabled":""}>${
+        edit ? "Save &amp; go back" : nextLabel}</button>
       ${extra}
     </div>`;
 }
 
 function wireNav(){
-  document.getElementById("prevbtn").onclick = back;
+  const prev = document.getElementById("prevbtn");
+  if(prev) prev.onclick = back;
   document.getElementById("nextbtn").onclick = next;
 }
 
@@ -38,7 +45,7 @@ function isAnswered(q){
 
 /* ---------- topbar: back button + progress dots ---------- */
 export function renderTopbar(s){
-  if(s.k==="home" || s.k==="card"){ topbar.innerHTML = ""; return; }
+  if(s.k==="home" || s.k==="card" || s.k==="review"){ topbar.innerHTML = ""; return; }
 
   const qSteps = STEPS.filter(x => x.k==="q" || x.k==="context");
   const idx = qSteps.indexOf(s);
@@ -101,12 +108,16 @@ export function vAbout(){
     <div class="field">
       <label class="lbl" for="ag">Age</label>
       <select id="ag">${AGES.map(a => `<option ${state.age===a?"selected":""}>${a}</option>`).join("")}</select>
+      <input type="text" id="agx" class="subfield" inputmode="numeric" pattern="[0-9]*" maxlength="3"
+             value="${esc(state.ageExact || "")}" placeholder="Or type your exact age — optional"
+             aria-label="Your exact age, optional">
+      <p class="hint">If you fill this in, your card shows your age instead of the range.</p>
     </div>
     <div class="field">
       <label class="lbl" for="ct">What church are you from?</label>
       <input type="text" id="ct" value="${esc(state.country)}" placeholder="Optional" maxlength="40">
     </div>
-    <div class="actions"><button class="btn wide" id="go" disabled>Continue</button></div>`;
+    <div class="actions"><button class="btn wide" id="go" disabled>${isEditing() ? "Save &amp; go back" : "Continue"}</button></div>`;
 
   const nm = document.getElementById("nm");
   const goBtn = document.getElementById("go");
@@ -122,6 +133,12 @@ export function vAbout(){
   nm.onkeydown = e => { if(e.key==="Enter" && !goBtn.disabled) next(); };
   document.getElementById("ag").onchange = e => state.age = e.target.value;
   document.getElementById("ct").oninput  = e => state.country = e.target.value;
+
+  /* digits only, so the card can't end up with "twenty-ish" as an age */
+  document.getElementById("agx").oninput = e => {
+    e.target.value = e.target.value.replace(/\D/g,"").slice(0,3);
+    state.ageExact = e.target.value;
+  };
 
   state.age = state.age || AGES[0];
   check();
@@ -266,6 +283,52 @@ export function vQuestion({q}){
   };
 
   wireNav();
+}
+
+/* ---------- review: every answer, each one a way back in ----------
+   Reached from "Change an answer" on the card. Editing one question
+   returns straight here rather than replaying the whole run. */
+export function vReview(){
+  const row = (stepIdx, label, value, missing) => `
+    <button class="reviewrow" data-step="${stepIdx}">
+      <span class="rq">${esc(label)}</span>
+      <span class="ra ${missing?"none":""}">${missing ? "Not answered yet" : esc(value)}</span>
+      <span class="redit">Change</span>
+    </button>`;
+
+  const group = name => `<div class="grouphdr"><span>${esc(name)}</span><i></i></div>`;
+
+  let html = group("About you");
+  html += row(STEP_ABOUT, "Your details",
+    [state.name, state.gender==="s" ? "Female" : state.gender==="b" ? "Male" : "",
+     displayAge(state), state.country].filter(Boolean).join(" · "), !state.name);
+  html += row(STEP_CONTEXT, "Where you're at right now",
+    state.ctx!=null ? CONTEXTS[state.ctx] : "", state.ctx==null);
+
+  let lastSec = null;
+  activeQuestions(state).forEach(q => {
+    if(q.section!==lastSec){ html += group(SECTIONS[q.section].name); lastSec = q.section; }
+    const a = answerText(state, q);
+    html += row(indexOfQ(q.id), q.q, a ? flat(a) : "", !a);
+  });
+
+  html += group("Anything else");
+  html += row(indexOf("extra"), "In your own words", state.extra?.trim() || "", !state.extra?.trim());
+
+  view.innerHTML = `
+    <p class="eyebrow">Your answers</p>
+    <h1 class="qtitle" style="margin-top:10px">Change anything<br>you like</h1>
+    <p class="lead">Tap an answer to edit just that one — you won't have to go through the rest again.</p>
+    <div class="reviewlist" id="rows">${html}</div>
+    <div class="actions">
+      <button class="btn gold wide" id="done">Back to my card</button>
+    </div>`;
+
+  document.getElementById("rows").onclick = e => {
+    const r = e.target.closest("[data-step]"); if(!r) return;
+    startEdit(+r.dataset.step);
+  };
+  document.getElementById("done").onclick = () => go(indexOf("card"));
 }
 
 /* ---------- extras ---------- */

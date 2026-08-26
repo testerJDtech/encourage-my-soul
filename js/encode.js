@@ -4,9 +4,14 @@
    sent anywhere, nothing is stored on a server.
 
    Format: version, name, gender, age, country, context, then one
-   field per question, then the free-text extra — joined with a unit
-   separator and base64url'd. Prefixes on a question field:
+   field per question, then the free-text extra, then the optional
+   exact age — joined with a unit separator and base64url'd.
+   Prefixes on a question field:
      ~  free text     *  "something else"     (bare) option indexes
+
+   New fields go on the END and must tolerate being absent: links
+   people have already sent won't have them, and decoding one of those
+   should still work rather than come back null.
    ================================================================== */
 
 import { QUESTIONS } from "./data.js";
@@ -37,6 +42,7 @@ export function encodeState(s){
     else                     p.push((a.sel||[]).join(","));
   });
   p.push(clean(s.extra));
+  p.push(clean(s.ageExact));
   return b64enc(p.join(FS));
 }
 
@@ -53,7 +59,8 @@ export function decodeState(code){
       else if(raw[0]==="*") s.answers[q.id] = { other:raw.slice(1) };
       else                  s.answers[q.id] = { sel:raw.split(",").map(Number) };
     });
-    s.extra = p[6+QUESTIONS.length] || "";
+    s.extra    = p[6+QUESTIONS.length] || "";
+    s.ageExact = p[7+QUESTIONS.length] || "";
     return s;
   }catch(e){ return null; }
 }

@@ -4,36 +4,17 @@
    else's, arrived at through a link (a "make your own" button).
    ================================================================== */
 
-import { SECTIONS, CONTEXTS } from "./data.js";
+import { SECTIONS } from "./data.js";
 import { resetState, setViewer } from "./state.js";
-import { view, topbar, esc, copy } from "./dom.js";
-import { activeQuestions, go, STEP_ABOUT, STEP_CONTEXT } from "./router.js";
+import { view, topbar, esc, copy, toast } from "./dom.js";
+import { activeQuestions, go, stopEdit, indexOf, STEP_ABOUT } from "./router.js";
 import { shareURL } from "./encode.js";
-
-/* one answer, normalised for display: text quote, "other", or option labels */
-export function answerText(s, q){
-  const a = s.answers[q.id]; if(!a) return null;
-  if(q.type==="text") return a.text?.trim() ? { v:a.text.trim(), quote:true } : null;
-  if(a.other!=null)   return a.other.trim() ? { v:a.other.trim() } : null;
-  if(!a.sel?.length)  return null;
-  return { v:a.sel.map(i => q.options[i]).filter(Boolean), multi:q.type==="multi" };
-}
-
-export function plainText(s){
-  const lines = [`How to encourage ${s.name}`, ""];
-  activeQuestions(s).forEach(q => {
-    const a = answerText(s,q); if(!a) return;
-    const v = Array.isArray(a.v) ? a.v.join(" + ") : a.v;
-    lines.push(`${q.short}: ${v}`);
-  });
-  if(s.extra?.trim()) lines.push("", s.extra.trim());
-  return lines.join("\n");
-}
+import { answerText, plainText, metaBits } from "./answers.js";
+import { shareCardImage } from "./image.js";
 
 export function renderCard(s, isViewer){
   topbar.innerHTML = "";
   const name = s.name || "Someone";
-  const heIs = s.gender==="s" ? "sister" : "brother";
 
   let body = "", lastSec = null, delay = 0;
   activeQuestions(s).forEach(q => {
@@ -58,10 +39,7 @@ export function renderCard(s, isViewer){
       <div class="entry"><div class="a quote">&ldquo;${esc(s.extra.trim())}&rdquo;</div></div>`;
   }
 
-  const tags = [ s.age && s.age!=="Rather not say" ? s.age : "",
-                 s.country || "",
-                 s.ctx!=null ? CONTEXTS[s.ctx] : "" ]
-               .filter(Boolean).map(t => `<span class="tag">${esc(t)}</span>`).join("");
+  const tags = metaBits(s).map(t => `<span class="tag">${esc(t)}</span>`).join("");
 
   const url = shareURL(s);
   const long = url.length > 1800;
@@ -72,7 +50,7 @@ export function renderCard(s, isViewer){
       <div class="cardhead">
         <p class="eyebrow">How to encourage</p>
         <h2 style="margin-top:6px">${esc(name)}</h2>
-        <div class="meta"><span class="tag">${heIs}</span>${tags}</div>
+        <div class="meta">${tags}</div>
       </div>
       ${body || `<p class="lead">No answers yet.</p>`}
     </div>
@@ -83,6 +61,9 @@ export function renderCard(s, isViewer){
     : `
       <div class="actions">
         <button class="btn gold" id="wa">Send on WhatsApp</button>
+        <button class="btn" id="pic">Send as a picture</button>
+      </div>
+      <div class="actions" style="margin-top:6px">
         <button class="btn ghost" id="em">Email it</button>
         <button class="btn ghost" id="cp">Copy link</button>
       </div>
@@ -110,5 +91,24 @@ export function renderCard(s, isViewer){
     location.href = `mailto:?subject=${encodeURIComponent("What encourages "+name)}&body=${encodeURIComponent(msg)}`;
   document.getElementById("cp").onclick   = () => copy(url, "Link copied");
   document.getElementById("txt").onclick  = () => copy(plainText(s), "Copied as text");
-  document.getElementById("edit").onclick = () => go(STEP_CONTEXT);
+
+  /* the review list, not a replay of the whole run */
+  document.getElementById("edit").onclick = () => { stopEdit(); go(indexOf("review")); };
+
+  const pic = document.getElementById("pic");
+  pic.onclick = async () => {
+    const label = pic.textContent;
+    pic.disabled = true;
+    pic.textContent = "Drawing…";
+    try{
+      const how = await shareCardImage(s, url);
+      if(how==="downloaded") toast("Picture saved — attach it to your message");
+      else if(how==="shared") toast("Sent");
+    }catch(e){
+      toast("Couldn't make the picture");
+    }finally{
+      pic.disabled = false;
+      pic.textContent = label;
+    }
+  };
 }

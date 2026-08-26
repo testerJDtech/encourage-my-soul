@@ -8,7 +8,7 @@
 import { state, getViewer, setViewer } from "./state.js";
 import { decodeState } from "./encode.js";
 import { STEPS, step, refreshSteps, setRenderer } from "./router.js";
-import { renderTopbar, vHome, vAbout, vWelcome, vContext, vSection, vQuestion, vExtra } from "./views.js";
+import { renderTopbar, vHome, vAbout, vWelcome, vContext, vSection, vQuestion, vExtra, vReview } from "./views.js";
 import { renderCard } from "./card.js";
 
 const SCREENS = {
@@ -19,7 +19,8 @@ const SCREENS = {
   section: vSection,
   q:       vQuestion,
   extra:   vExtra,
-  card:    () => renderCard(state, false)
+  card:    () => renderCard(state, false),
+  review:  vReview
 };
 
 function render(){

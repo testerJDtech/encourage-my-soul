@@ -6,7 +6,7 @@
    Nothing here goes to a server; the draft is this device only.
    ================================================================== */
 
-const BLANK = { name:"", gender:"", age:"", country:"", ctx:null, answers:{}, extra:"" };
+const BLANK = { name:"", gender:"", age:"", ageExact:"", country:"", ctx:null, answers:{}, extra:"" };
 
 export const state = { ...BLANK, answers:{} };
 
